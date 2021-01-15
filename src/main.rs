@@ -47,7 +47,7 @@ pub fn build_tcp_packet(
     dst_ip: Ipv4Addr,
     src_port: u16,
     dst_port: u16,
-    sec_num: u32,
+    seq_num: u32,
     ack_num: u32,
     tcp_flags: u16,
     payload: &[u8],
@@ -100,7 +100,8 @@ pub fn build_tcp_packet(
         tcp_header.set_window(64240);
         tcp_header.set_data_offset(8);
         tcp_header.set_urgent_ptr(0);
-        tcp_header.set_sequence(0);
+        tcp_header.set_sequence(seq_num);
+        tcp_header.set_acknowledgement(ack_num);
 
         tcp_header.set_options(&[
             TcpOption::mss(1460),
@@ -179,8 +180,10 @@ fn handle_tcp_packet(
     other_ip: Ipv4Addr,
     tcp: &TcpPacket,
 ) {
+    let our_port = 80;
+    let new_dst_port = 8090;
     // filter by dst port
-    if tcp.get_destination() == 80 {
+    if tcp.get_destination() == our_port {
         let flags = tcp.get_flags();
         // Oh boi, we received a syn. Respond.
         if flags & TcpFlags::SYN != 0 {
@@ -190,10 +193,10 @@ fn handle_tcp_packet(
                 other_mac,
                 own_ip,
                 other_ip,
-                80,
-                8090,
-                0,
-                1,
+                our_port,
+                new_dst_port,
+                1337,
+                tcp.get_sequence() + 1,
                 flags | TcpFlags::ACK,
                 &[],
             );
