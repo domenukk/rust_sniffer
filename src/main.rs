@@ -194,7 +194,7 @@ fn handle_tcp_packet(
                 own_ip,
                 other_ip,
                 our_port,
-                new_dst_port,
+                tcp.get_source(), //new_dst_port,
                 1337,
                 tcp.get_sequence() + 1,
                 flags | TcpFlags::ACK,
