@@ -103,13 +103,13 @@ pub fn build_tcp_packet(
         tcp_header.set_sequence(seq_num);
         tcp_header.set_acknowledgement(ack_num);
 
-        tcp_header.set_options(&[
+        /*tcp_header.set_options(&[
             TcpOption::mss(1460),
             TcpOption::sack_perm(),
             TcpOption::nop(),
             TcpOption::nop(),
             TcpOption::wscale(7),
-        ]);
+        ]);*/
 
         tcp_header.set_payload(payload);
 
@@ -202,6 +202,21 @@ fn handle_tcp_packet(
             );
             yolo_send(interface_name, &new_packet);
             //new_packet
+        }
+        if flags & TcpFlags::ACK != 0 {
+            let new_packet = build_tcp_packet(
+                own_mac,
+                other_mac,
+                own_ip,
+                other_ip,
+                our_port,
+                tcp.get_source(),
+                tcp.get_acknowledgement(),
+                tcp.get_sequence() + 1, /* TODO: len(pkt.getLayer(RAW)) */
+                TcpFlags::PSH | TcpFlags::URG,
+                &[9u8, 10u8, 11u8],
+            );
+            yolo_send(interface_name, &new_packet);
         }
         println!(
             "[{}]: TCP Packet: ({:#?}) flags: {:#?}",
